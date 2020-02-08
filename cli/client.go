@@ -130,6 +130,9 @@ var clientDealCmd = &cli.Command{
 			TransferType: storagemarket.TTGraphsync,
 			Root:         data,
 		}
+		if cctx.Bool("manual-transfer") {
+			ref.TransferType = storagemarket.TTManual
+		}
 
 		proposal, err := api.ClientStartDeal(ctx, ref, a, miner, types.BigInt(price), uint64(dur))
 		if err != nil {
