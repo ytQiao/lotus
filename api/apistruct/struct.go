@@ -152,6 +152,10 @@ type StorageMinerStruct struct {
 		ActorAddress    func(context.Context) (address.Address, error)         `perm:"read"`
 		ActorSectorSize func(context.Context, address.Address) (uint64, error) `perm:"read"`
 
+		MarketImportDealData      func(context.Context, cid.Cid, string) error                   `perm:"write"`
+		MarketListDeals           func(ctx context.Context) ([]storagemarket.StorageDeal, error) `perm:"read"`
+		MarketListIncompleteDeals func(ctx context.Context) ([]storagemarket.MinerDeal, error)   `perm:"read"`
+
 		PledgeSector func(context.Context) error `perm:"write"`
 
 		SectorsStatus func(context.Context, uint64) (api.SectorInfo, error)     `perm:"read"`
@@ -586,6 +590,18 @@ func (c *StorageMinerStruct) WorkerQueue(ctx context.Context, cfg sectorbuilder.
 
 func (c *StorageMinerStruct) WorkerDone(ctx context.Context, task uint64, res sectorbuilder.SealRes) error {
 	return c.Internal.WorkerDone(ctx, task, res)
+}
+
+func (c *StorageMinerStruct) MarketImportDealData(ctx context.Context, propcid cid.Cid, path string) error {
+	return c.Internal.MarketImportDealData(ctx, propcid, path)
+}
+
+func (c *StorageMinerStruct) MarketListDeals(ctx context.Context) ([]storagemarket.StorageDeal, error) {
+	return c.Internal.MarketListDeals(ctx)
+}
+
+func (c *StorageMinerStruct) MarketListIncompleteDeals(ctx context.Context) ([]storagemarket.MinerDeal, error) {
+	return c.Internal.MarketListIncompleteDeals(ctx)
 }
 
 var _ api.Common = &CommonStruct{}
