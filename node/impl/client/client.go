@@ -55,7 +55,7 @@ type API struct {
 	Filestore  dtypes.ClientFilestore `optional:"true"`
 }
 
-func (a *API) ClientStartDeal(ctx context.Context, data cid.Cid, addr address.Address, miner address.Address, epochPrice types.BigInt, blocksDuration uint64) (*cid.Cid, error) {
+func (a *API) ClientStartDeal(ctx context.Context, data *storagemarket.DataRef, addr address.Address, miner address.Address, epochPrice types.BigInt, blocksDuration uint64) (*cid.Cid, error) {
 	exist, err := a.WalletHas(ctx, addr)
 	if err != nil {
 		return nil, xerrors.Errorf("failed getting addr from wallet: %w", addr)
@@ -159,13 +159,11 @@ func (a *API) ClientFindData(ctx context.Context, root cid.Cid) ([]api.QueryOffe
 			out[k] = api.QueryOffer{Err: err.Error(), Miner: p.Address, MinerPeerID: p.ID}
 		} else {
 			out[k] = api.QueryOffer{
-				Root:                    root,
-				Size:                    queryResponse.Size,
-				MinPrice:                utils.FromSharedTokenAmount(queryResponse.PieceRetrievalPrice()),
-				PaymentInterval:         queryResponse.MaxPaymentInterval,
-				PaymentIntervalIncrease: queryResponse.MaxPaymentIntervalIncrease,
-				Miner:                   p.Address, // TODO: check
-				MinerPeerID:             p.ID,
+				Root:        root,
+				Size:        queryResponse.Size,
+				MinPrice:    utils.FromSharedTokenAmount(queryResponse.PieceRetrievalPrice()),
+				Miner:       p.Address, // TODO: check
+				MinerPeerID: p.ID,
 			}
 		}
 	}
@@ -280,10 +278,10 @@ func (a *API) ClientRetrieve(ctx context.Context, order api.RetrievalOrder, path
 	retrievalResult := make(chan error, 1)
 
 	unsubscribe := a.Retrieval.SubscribeToEvents(func(event retrievalmarket.ClientEvent, state retrievalmarket.ClientDealState) {
-		if state.PayloadCID.Equals(order.Root) {
+		if state.DealProposal.PayloadCID == order.Root {
 			switch event {
 			case retrievalmarket.ClientEventError:
-				retrievalResult <- xerrors.Errorf("Retrieval Error: %s", state.Message)
+				retrievalResult <- xerrors.New("Retrieval Error")
 			case retrievalmarket.ClientEventComplete:
 				retrievalResult <- nil
 			}
@@ -293,7 +291,7 @@ func (a *API) ClientRetrieve(ctx context.Context, order api.RetrievalOrder, path
 	a.Retrieval.Retrieve(
 		ctx,
 		order.Root,
-		retrievalmarket.NewParamsV0(types.BigDiv(order.Total, types.NewInt(order.Size)).Int, order.PaymentInterval, order.PaymentIntervalIncrease),
+		retrievalmarket.NewParamsV0(types.BigDiv(order.Total, types.NewInt(order.Size)).Int, 0, 0),
 		utils.ToSharedTokenAmount(order.Total),
 		order.MinerPeerID,
 		order.Client,
@@ -303,7 +301,7 @@ func (a *API) ClientRetrieve(ctx context.Context, order api.RetrievalOrder, path
 		return xerrors.New("Retrieval Timed Out")
 	case err := <-retrievalResult:
 		if err != nil {
-			return xerrors.Errorf("Retrieve: %w", err)
+			return xerrors.Errorf("RetrieveUnixfs: %w", err)
 		}
 	}
 
