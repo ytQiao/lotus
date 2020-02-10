@@ -9,18 +9,21 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/filecoin-project/go-fil-markets/shared/tokenamount"
+	storagemarket "github.com/filecoin-project/go-fil-markets/storagemarket"
+
 	"github.com/gorilla/mux"
 	"github.com/ipfs/go-cid"
 	files "github.com/ipfs/go-ipfs-files"
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-address"
-	storagemarket "github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-sectorbuilder"
 	"github.com/filecoin-project/go-sectorbuilder/fs"
 
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/api/apistruct"
+	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/lib/tarutil"
 	"github.com/filecoin-project/lotus/miner"
 	"github.com/filecoin-project/lotus/storage"
@@ -35,9 +38,10 @@ type StorageMinerAPI struct {
 	SectorBlocks        *sectorblocks.SectorBlocks
 
 	StorageProvider storagemarket.StorageProvider
-	Miner           *storage.Miner
-	BlockMiner      *miner.Miner
-	Full            api.FullNode
+
+	Miner      *storage.Miner
+	BlockMiner *miner.Miner
+	Full       api.FullNode
 }
 
 func (sm *StorageMinerAPI) ServeRemote(w http.ResponseWriter, r *http.Request) {
@@ -275,6 +279,10 @@ func (sm *StorageMinerAPI) MarketListDeals(ctx context.Context) ([]storagemarket
 
 func (sm *StorageMinerAPI) MarketListIncompleteDeals(ctx context.Context) ([]storagemarket.MinerDeal, error) {
 	return sm.StorageProvider.ListIncompleteDeals()
+}
+
+func (sm *StorageMinerAPI) MarketSetPrice(ctx context.Context, p types.BigInt) error {
+	return sm.StorageProvider.AddAsk(tokenamount.TokenAmount(p), 60*60*24*100) // lasts for 100 days?
 }
 
 var _ api.StorageMiner = &StorageMinerAPI{}

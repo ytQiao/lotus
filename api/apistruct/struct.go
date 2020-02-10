@@ -155,6 +155,7 @@ type StorageMinerStruct struct {
 		MarketImportDealData      func(context.Context, cid.Cid, string) error                   `perm:"write"`
 		MarketListDeals           func(ctx context.Context) ([]storagemarket.StorageDeal, error) `perm:"read"`
 		MarketListIncompleteDeals func(ctx context.Context) ([]storagemarket.MinerDeal, error)   `perm:"read"`
+		MarketSetPrice            func(context.Context, types.BigInt) error                      `perm:"admin"`
 
 		PledgeSector func(context.Context) error `perm:"write"`
 
@@ -602,6 +603,10 @@ func (c *StorageMinerStruct) MarketListDeals(ctx context.Context) ([]storagemark
 
 func (c *StorageMinerStruct) MarketListIncompleteDeals(ctx context.Context) ([]storagemarket.MinerDeal, error) {
 	return c.Internal.MarketListIncompleteDeals(ctx)
+}
+
+func (c *StorageMinerStruct) MarketSetPrice(ctx context.Context, p types.BigInt) error {
+	return c.Internal.MarketSetPrice(ctx, p)
 }
 
 var _ api.Common = &CommonStruct{}
