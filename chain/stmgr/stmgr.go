@@ -339,6 +339,9 @@ func (sm *StateManager) LoadActorState(ctx context.Context, a address.Address, o
 
 	return act, nil
 }
+
+// Similar to `vm.ResolveToKeyAddr` but does not allow `Actor` type of addresses. Uses the `TipSet` `ts`
+// to generate the VM state.
 func (sm *StateManager) ResolveToKeyAddress(ctx context.Context, addr address.Address, ts *types.TipSet) (address.Address, error) {
 	switch addr.Protocol() {
 	case address.BLS, address.SECP256K1:

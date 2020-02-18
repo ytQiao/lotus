@@ -51,6 +51,7 @@ func (spa StoragePowerActor) Exports() []interface{} {
 }
 
 type StoragePowerState struct {
+	// Set of ID addresses of all miners.
 	Miners         cid.Cid
 	ProvingBuckets cid.Cid // amt[ProvingPeriodBucket]hamt[minerAddress]struct{}
 	MinerCount     uint64
@@ -106,6 +107,7 @@ func (spa StoragePowerActor) CreateStorageMiner(act *types.Actor, vmctx types.VM
 	if err != nil {
 		return nil, err
 	}
+	// `ret` contains the ID address of the storage miner created.
 
 	naddr, nerr := address.NewFromBytes(ret)
 	if nerr != nil {

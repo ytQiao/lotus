@@ -42,6 +42,9 @@ func init() {
 type InitActor struct{}
 
 type InitActorState struct {
+	// Maps generic `Address` to its `ID` type.
+	// FIXME: Q: Is this any address type or just `Actor`? (see `InitActor.Exec`).
+	//  Through `RegisterNewAddress` seems that it can be any address.
 	AddressMap cid.Cid
 
 	NextID uint64
@@ -169,6 +172,9 @@ func IsSingletonActor(code cid.Cid) bool {
 	return code == StoragePowerCodeCid || code == StorageMarketCodeCid || code == InitCodeCid || code == CronCodeCid
 }
 
+// Adds the actor's *entry* (not the actor itself) in the `InitActor.AddressMap`.
+// FIXME: This should check that the address does not exist in the map, we never
+//  delete nor overwrite entries.
 func (ias *InitActorState) AddActor(cst *hamt.CborIpldStore, addr address.Address) (address.Address, error) {
 	nid := ias.NextID
 
@@ -195,6 +201,7 @@ func (ias *InitActorState) AddActor(cst *hamt.CborIpldStore, addr address.Addres
 	return NewIDAddress(nid)
 }
 
+// Searches `AddressMap` for `addr` and returns the corresponding address in `ID` format.
 func (ias *InitActorState) Lookup(cst *hamt.CborIpldStore, addr address.Address) (address.Address, error) {
 	amap, err := hamt.LoadNode(context.TODO(), cst, ias.AddressMap)
 	if err != nil {
@@ -219,6 +226,7 @@ type AccountActorState struct {
 	Address address.Address
 }
 
+// Returns a new `Actor` address type unique for this `creator` address and message `nonce`.
 func ComputeActorAddress(creator address.Address, nonce uint64) (address.Address, ActorError) {
 	buf := new(bytes.Buffer)
 	_, err := buf.Write(creator.Bytes())
